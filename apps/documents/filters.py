@@ -10,12 +10,16 @@ class DocumentFilter(filters.FilterSet):
     updated_from = filters.DateTimeFilter(field_name='updated_at', lookup_expr='gte')
     updated_to = filters.DateTimeFilter(field_name='updated_at', lookup_expr='lte')
     file_ext = filters.CharFilter(method='filter_file_ext')
+    spa_code = filters.CharFilter(field_name='spa_code', lookup_expr='icontains')
+    spa_name = filters.CharFilter(field_name='spa_name', lookup_expr='icontains')
+    title = filters.CharFilter(field_name='title', lookup_expr='icontains')
+    doc_type_name = filters.CharFilter(field_name='doc_type__name', lookup_expr='icontains')
 
     class Meta:
         model = Document
         fields = {
-            'user': ['exact'],
             'doc_type': ['exact'],
+            'spa': ['exact'],
             'uploaded_by': ['exact'],
         }
 

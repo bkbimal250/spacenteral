@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.location.models import State, City, Area
-from .models import SpaOwner, Spa
+from .models import PrimaryOwner, SecondaryOwner, Spa
 
 
 class StateSerializer(serializers.ModelSerializer):
@@ -25,39 +25,64 @@ class AreaSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'city']
 
 
-class SpaOwnerSerializer(serializers.ModelSerializer):
-    parent_owner_name = serializers.CharField(source='parent_owner.fullname', read_only=True)
-
+class PrimaryOwnerSerializer(serializers.ModelSerializer):
+    spa_count = serializers.SerializerMethodField()
+    
     class Meta:
-        model = SpaOwner
-        fields = ['id', 'fullname', 'parent_owner', 'parent_owner_name', 'created_at', 'updated_at']
+        model = PrimaryOwner
+        fields = ['id', 'fullname', 'email', 'phone', 'spa_count', 'created_at', 'updated_at']
+    
+    def get_spa_count(self, obj):
+        return obj.spas.count()
+
+
+class SecondaryOwnerSerializer(serializers.ModelSerializer):
+    spa_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = SecondaryOwner
+        fields = ['id', 'fullname', 'email', 'phone', 'spa_count', 'created_at', 'updated_at']
+    
+    def get_spa_count(self, obj):
+        return obj.spas.count()
 
 
 class SpaListSerializer(serializers.ModelSerializer):
-    owner_name = serializers.CharField(source='owner.fullname', read_only=True)
+    primary_owner_name = serializers.CharField(source='primary_owner.fullname', read_only=True)
+    secondary_owner_name = serializers.CharField(source='secondary_owner.fullname', read_only=True)
     state = serializers.CharField(source='area.city.state.name', read_only=True)
     city = serializers.CharField(source='area.city.name', read_only=True)
     area_name = serializers.CharField(source='area.name', read_only=True)
+    agreement_status_display = serializers.CharField(source='get_agreement_status_display', read_only=True)
 
     class Meta:
         model = Spa
         fields = [
-            'id', 'spa_code', 'spa_name', 'owner', 'owner_name',
-            'status', 'state', 'city', 'area', 'area_name', 'created_at'
+            'id', 'spa_code', 'spa_name', 
+            'primary_owner', 'primary_owner_name',
+            'secondary_owner', 'secondary_owner_name',
+            'spamanager', 'status', 'agreement_status', 'agreement_status_display',
+            'state', 'city', 'area', 'area_name', 'google_map_link', 'created_at'
         ]
 
 
 class SpaDetailSerializer(serializers.ModelSerializer):
-    owner = SpaOwnerSerializer(read_only=True)
-    sub_owners = SpaOwnerSerializer(many=True, read_only=True)
+    primary_owner = PrimaryOwnerSerializer(read_only=True)
+    secondary_owner = SecondaryOwnerSerializer(read_only=True)
     area = AreaSerializer(read_only=True)
+    agreement_status_display = serializers.CharField(source='get_agreement_status_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
         model = Spa
         fields = [
-            'id', 'spa_code', 'spa_name', 'owner', 'sub_owners',
-            'opening_date', 'reopen_date', 'status', 'line_track', 'landmark',
-            'emails', 'phones', 'address', 'agreement_status', 'remark',
+            'id', 'spa_code', 'spa_name', 
+            'primary_owner', 'secondary_owner', 'spamanager',
+            'opening_date', 
+            'status', 'status_display',
+            'line_track', 'landmark',
+            'emails', 'phones', 'address', 'google_map_link',
+            'agreement_status', 'agreement_status_display', 'remark',
             'area', 'created_at', 'created_by'
         ]
 
@@ -66,8 +91,19 @@ class SpaCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Spa
         fields = [
-            'spa_code', 'spa_name', 'owner', 'sub_owners', 'opening_date', 'reopen_date',
-            'status', 'line_track', 'landmark', 'emails', 'phones', 'address',
+            'spa_code', 'spa_name', 
+            'primary_owner', 'secondary_owner', 'spamanager',
+            'opening_date',
+            'status', 'line_track', 'landmark', 
+            'emails', 'phones', 'address', 'google_map_link',
             'agreement_status', 'remark', 'area'
         ]
+    
+    def validate(self, data):
+        # Ensure at least primary owner is provided
+        if not data.get('primary_owner'):
+            raise serializers.ValidationError({
+                'primary_owner': 'Primary owner is required'
+            })
+        return data
 

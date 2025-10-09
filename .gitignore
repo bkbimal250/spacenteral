@@ -28,6 +28,10 @@ Thumbs.db
 node_modules/
 *.lock
 
+# Frontend (keep outside git history for Django repo)
+frontend/
+frontend/**
+
 # Coverage / test
 .pytest_cache/
 .coverage

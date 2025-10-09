@@ -1,0 +1,28 @@
+[Unit]
+Description=SpaCentral Django Application
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/spacentral
+Environment="PATH=/var/www/spacentral/venv/bin"
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/var/www/spacentral/venv/bin/gunicorn spa_central.wsgi:application \
+    --bind 0.0.0.0:8000 \
+    --workers 4 \
+    --worker-class sync \
+    --timeout 120 \
+    --max-requests 1000 \
+    --max-requests-jitter 50 \
+    --access-logfile /var/www/spacentral/logs/gunicorn-access.log \
+    --error-logfile /var/www/spacentral/logs/gunicorn-error.log \
+    --log-level info
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
