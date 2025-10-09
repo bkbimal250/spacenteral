@@ -2,27 +2,37 @@
 from django.db import models
 from django.conf import settings
 
-class SpaOwner(models.Model):
+
+class PrimaryOwner(models.Model):
+    """Independent Primary Owner model"""
     fullname = models.CharField(max_length=200)
-    parent_owner = models.ForeignKey(
-        'self',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='children'
-    )
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'spa_owners'
+        db_table = 'primary_owners'
         ordering = ['fullname']
 
     def __str__(self):
-        if self.parent_owner:
-            return f"{self.fullname} (Sub-owner of {self.parent_owner.fullname})"
         return self.fullname
 
+
+class SecondaryOwner(models.Model):
+    """Independent Secondary Owner model"""
+    fullname = models.CharField(max_length=200)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'secondary_owners'
+        ordering = ['fullname']
+
+    def __str__(self):
+        return self.fullname
 
 
 class Spa(models.Model):
@@ -30,18 +40,34 @@ class Spa(models.Model):
     spa_name = models.CharField(max_length=200)
     area = models.ForeignKey('location.Area', on_delete=models.SET_NULL, null=True, related_name='spas')
 
-    # Linked to one primary owner
-    owner = models.ForeignKey('SpaOwner', on_delete=models.SET_NULL, null=True, related_name='spas')
-    # Additional sub-owners/managers (optional)
-    sub_owners = models.ManyToManyField('SpaOwner', blank=True, related_name='managed_spas')
-
+    # One-to-many relationships with independent owner models
+    # One Primary Owner can manage multiple spas, but each spa has only ONE primary owner
+    primary_owner = models.ForeignKey(
+        'PrimaryOwner',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='spas',
+        help_text="Primary Owner (required for spa creation)"
+    )
+    
+    # One Secondary Owner can manage multiple spas, but each spa has only ONE secondary owner (optional)
+    secondary_owner = models.ForeignKey(
+        'SecondaryOwner',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='spas',
+        help_text="Secondary Owner (optional)"
+    )
+    
+    spamanager = models.CharField(max_length=200, blank=True, null=True)
     opening_date = models.DateField(null=True, blank=True)
-    reopen_date = models.DateField(null=True, blank=True)
 
     STATUS_CHOICES = [
         ('Open', 'Open'),
         ('Closed', 'Closed'),
-        ('Temporarily Closed', 'Temporarily Closed')
+        ('Temporarily Closed', 'Temporarily Closed'),
+        ('Processing', 'Processing'),
     ]
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='Open')
 
@@ -53,13 +79,15 @@ class Spa(models.Model):
     phones = models.TextField(blank=True, null=True, help_text="Comma-separated list of phone numbers")
 
     address = models.TextField(blank=True, null=True)
+    google_map_link = models.TextField(blank=True, null=True, help_text="Google Maps link for spa location (supports long embed URLs)")
 
-    AGREEMENT = [
-        ('Active', 'Active'),
-        ('Expired', 'Expired'),
-        ('Not Avail', 'Not Avail')
+    AGREEMENT_STATUS_CHOICES = [
+        ('done', 'Done'),
+        ('pending', 'Pending'),
+       
     ]
-    agreement_status = models.CharField(max_length=50, choices=AGREEMENT, default='Not Avail')
+
+    agreement_status = models.CharField(max_length=50, choices=AGREEMENT_STATUS_CHOICES, default='pending')
     remark = models.TextField(blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)

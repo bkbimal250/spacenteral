@@ -1,0 +1,22 @@
+[Unit]
+Description=SpaCentral Daphne WebSocket Server
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/spacentral
+Environment="PATH=/var/www/spacentral/venv/bin"
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/var/www/spacentral/venv/bin/daphne \
+    -b 0.0.0.0 \
+    -p 8001 \
+    spa_central.asgi:application
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
