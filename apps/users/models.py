@@ -34,6 +34,7 @@ class User(AbstractUser):
     
     USER_TYPE_CHOICES = (
         ('manager', 'Manager'),
+        # area manager
         ('spa_manager', 'Spa Manager'),
         ('employee', 'Employee'),
         ('admin', 'Admin'),

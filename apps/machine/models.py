@@ -2,66 +2,98 @@ from django.db import models
 from django.conf import settings
 
 
-class Machine(models.Model):
-    """Card swipe machine installed at spas"""
+class AccountHolder(models.Model):
+    """Account holder information for machines"""
+    full_name = models.CharField(max_length=150, help_text="Full name of account holder")
+    designation = models.CharField(max_length=100, blank=True, null=True, help_text="Designation/Title")
     
-    STATUS_CHOICES = (
-        ('active', 'Active'),
-        ('inactive', 'Inactive'),
-        ('maintenance', 'Maintenance'),
-        ('retired', 'Retired'),
-    )
-
-    # Unique identifiers
-    serial_number = models.CharField(max_length=100, unique=True)
-    model_name = models.CharField(max_length=100)
-    firmware_version = models.CharField(max_length=50, blank=True, null=True)
-
-    # Assignment
-    spa = models.ForeignKey('spas.Spa', related_name='machines', on_delete=models.PROTECT)
-    installed_area = models.ForeignKey('location.Area', related_name='machines', on_delete=models.PROTECT)
-
-    # Network/placement
-    ip_address = models.GenericIPAddressField(blank=True, null=True)
-    location_note = models.CharField(max_length=200, blank=True, null=True, help_text='e.g., Front desk, Room 1')
-
-    # Status
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
-    activated_at = models.DateField(blank=True, null=True)
-    last_service_date = models.DateField(blank=True, null=True)
-
-    # Meta
+    # Audit
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='machines_created', on_delete=models.SET_NULL, null=True)
+    
+    class Meta:
+        db_table = 'account_holders'
+        ordering = ['full_name']
+        verbose_name = 'Account Holder'
+        verbose_name_plural = 'Account Holders'
+    
+    def __str__(self):
+        if self.designation:
+            return f"{self.full_name} ({self.designation})"
+        return self.full_name
+
+
+class Machine(models.Model):
+    """Machine installation record for spas (Excel-like centralized record)"""
+
+    STATUS_CHOICES = [
+        ('in_use', 'In Use'),
+        ('not_in_use', 'Not In Use'),
+        ('broken', 'Broken'),
+    ]
+
+    # --- Spa Info (Location is derived from Spa) ---
+    spa = models.ForeignKey('spas.Spa', on_delete=models.SET_NULL, null=True, blank=True, related_name='machines', help_text="Spa where machine is installed (location inherited from spa)")
+
+    # --- Machine Information ---
+    serial_number = models.CharField(max_length=100, unique=True, help_text="Unique serial number")
+    machine_code = models.CharField(max_length=100, blank=True, null=True, help_text="Unique internal code or ID")
+    machine_name = models.CharField(max_length=100, blank=True, null=True, help_text="Display name or identifier")
+    model_name = models.CharField(max_length=100, blank=True, null=True, help_text="Model/Type of machine")
+    firmware_version = models.CharField(max_length=50, blank=True, null=True, help_text="Software version")
+
+    # --- Banking / Account Info ---
+    account_name = models.CharField(max_length=200, blank=True, null=True, help_text="Account name for transactions")
+    bank_name = models.CharField(max_length=150, blank=True, null=True, help_text="Bank name")
+    account_number = models.CharField(max_length=100, blank=True, null=True, help_text="Bank account number")
+    acc_holder = models.ForeignKey(AccountHolder, on_delete=models.SET_NULL, blank=True, null=True, related_name='machines', help_text="Account holder")
+    mid = models.CharField(max_length=100, blank=True, null=True, help_text="Merchant ID")
+    tid = models.CharField(max_length=100, blank=True, null=True, help_text="Terminal ID")
+
+    # --- Status & Meta ---
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='in_use')
+    remark = models.TextField(blank=True, null=True, help_text="Additional notes or comments")
+
+    # --- Audit Info ---
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='machines_created'
+    )
 
     class Meta:
         db_table = 'machines'
-        ordering = ['serial_number']
+        ordering = ['spa__spa_name', 'serial_number']
         indexes = [
-            models.Index(fields=['serial_number'], name='idx_machine_sn'),
-            models.Index(fields=['spa', 'status'], name='idx_machine_spa_status'),
+            models.Index(fields=['serial_number'], name='idx_machine_serial'),
+            models.Index(fields=['machine_code'], name='idx_machine_code'),
+            models.Index(fields=['status'], name='idx_machine_status'),
+            models.Index(fields=['spa'], name='idx_machine_spa'),
         ]
+        verbose_name = 'Machine'
+        verbose_name_plural = 'Machines'
 
     def __str__(self):
-        return f"{self.serial_number} - {self.model_name}"
-
-
-class MachineAssignment(models.Model):
-    """History of machine reassignments between spas/areas"""
-    machine = models.ForeignKey(Machine, related_name='assignments', on_delete=models.CASCADE)
-    from_spa = models.ForeignKey('spas.Spa', related_name='machine_moves_from', on_delete=models.SET_NULL, null=True, blank=True)
-    to_spa = models.ForeignKey('spas.Spa', related_name='machine_moves_to', on_delete=models.PROTECT)
-    from_area = models.ForeignKey('location.Area', related_name='machine_moves_from', on_delete=models.SET_NULL, null=True, blank=True)
-    to_area = models.ForeignKey('location.Area', related_name='machine_moves_to', on_delete=models.PROTECT)
-    moved_at = models.DateTimeField(auto_now_add=True)
-    note = models.CharField(max_length=200, blank=True, null=True)
-
-    class Meta:
-        db_table = 'machine_assignments'
-        ordering = ['-moved_at']
-
-    def __str__(self):
-        return f"{self.machine.serial_number}: {self.from_spa} -> {self.to_spa}"
-
-# Create your models here.
+        return f"{self.machine_name or 'Machine'} ({self.serial_number}) - {self.spa.spa_name if self.spa else 'No Spa'}"
+    
+    @property
+    def area(self):
+        """Get area from spa's location"""
+        return self.spa.area if self.spa else None
+    
+    @property
+    def city(self):
+        """Get city from spa's location"""
+        if self.spa and self.spa.area:
+            return self.spa.area.city
+        return None
+    
+    @property
+    def state(self):
+        """Get state from spa's location"""
+        if self.spa and self.spa.area and self.spa.area.city:
+            return self.spa.area.city.state
+        return None
