@@ -19,8 +19,12 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.authtoken.views import obtain_auth_token
+from apps.views import home, custom_404, custom_500
 
 urlpatterns = [
+    # Homepage
+    path('', home, name='home'),
+    
     # Admin
     path('admin/', admin.site.urls),
     
@@ -37,6 +41,10 @@ urlpatterns = [
     # Health check
     path('health/', lambda request: __import__('django.http').HttpResponse('OK'), name='health_check'),
 ]
+
+# Custom error handlers
+handler404 = custom_404
+handler500 = custom_500
 
 # Serve media files in development
 if settings.DEBUG:

@@ -27,7 +27,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-qj1c-p**&$smg*@+0ie90
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
 
 # Production Security Settings
 if not DEBUG:
@@ -85,7 +85,7 @@ ROOT_URLCONF = 'spa_central.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'Templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -107,12 +107,12 @@ WSGI_APPLICATION = 'spa_central.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': config('DB_ENGINE', default='django.db.backends.mysql'),
-        'NAME': config('DB_NAME', default='spacentraldata'),
-        'USER': config('DB_USER', default='dosadmin'),
-        'PASSWORD': config('DB_PASSWORD', default='DishaSolution@8989'),
-        'HOST': config('DB_HOST', default='82.25.109.137'),
-        'PORT': config('DB_PORT', default='3306'),
+        'ENGINE': config('DB_ENGINE'),
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT'),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
