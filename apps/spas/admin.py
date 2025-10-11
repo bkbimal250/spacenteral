@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PrimaryOwner, SecondaryOwner, Spa
+from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa
 
 
 @admin.register(PrimaryOwner)
@@ -18,33 +18,50 @@ class SecondaryOwnerAdmin(admin.ModelAdmin):
     list_filter = ['created_at']
 
 
+@admin.register(ThirdOwner)
+class ThirdOwnerAdmin(admin.ModelAdmin):
+    list_display = ['fullname', 'email', 'phone', 'created_at']
+    search_fields = ['fullname', 'email', 'phone']
+    ordering = ['fullname']
+    list_filter = ['created_at']
+
+
+@admin.register(FourthOwner)
+class FourthOwnerAdmin(admin.ModelAdmin):
+    list_display = ['fullname', 'email', 'phone', 'created_at']
+    search_fields = ['fullname', 'email', 'phone']
+    ordering = ['fullname']
+    list_filter = ['created_at']
+
+
 @admin.register(Spa)
 class SpaAdmin(admin.ModelAdmin):
     list_display = [
         'spa_name', 'spa_code', 
-        'primary_owner', 'secondary_owner', 
+        'primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner',
         'spamanager', 'status', 'agreement_status', 
         'area', 'created_at'
     ]
     list_filter = [
         'status', 'agreement_status',
         'area__city__state', 'area__city', 'area',
-        'primary_owner', 'secondary_owner'
+        'primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner'
     ]
     search_fields = [
         'spa_name', 'spa_code', 
         'primary_owner__fullname', 'secondary_owner__fullname',
+        'third_owner__fullname', 'fourth_owner__fullname',
         'spamanager', 'emails', 'phones'
     ]
-    raw_id_fields = ['primary_owner', 'secondary_owner', 'area', 'created_by']
+    raw_id_fields = ['primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner', 'area', 'created_by']
     ordering = ['spa_name']
     fieldsets = (
         ('Basic Information', {
             'fields': ('spa_code', 'spa_name', 'status', 'spamanager')
         }),
         ('Ownership', {
-            'fields': ('primary_owner', 'secondary_owner'),
-            'description': 'Primary Owner is required. Secondary Owner is optional.'
+            'fields': ('primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner'),
+            'description': 'Primary Owner is required. Secondary, Third, and Fourth Owners are optional.'
         }),
         ('Location', {
             'fields': ('area', 'line_track', 'landmark', 'address', 'google_map_link')
@@ -68,6 +85,6 @@ class SpaAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.select_related('primary_owner', 'secondary_owner', 'area__city__state')
+        return qs.select_related('primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner', 'area__city__state')
 
 # Register your models here.

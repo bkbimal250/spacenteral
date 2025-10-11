@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.location.models import State, City, Area
-from .models import PrimaryOwner, SecondaryOwner, Spa
+from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa
 
 
 class StateSerializer(serializers.ModelSerializer):
@@ -47,9 +47,33 @@ class SecondaryOwnerSerializer(serializers.ModelSerializer):
         return obj.spas.count()
 
 
+class ThirdOwnerSerializer(serializers.ModelSerializer):
+    spa_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ThirdOwner
+        fields = ['id', 'fullname', 'email', 'phone', 'spa_count', 'created_at', 'updated_at']
+    
+    def get_spa_count(self, obj):
+        return obj.spas.count()
+
+
+class FourthOwnerSerializer(serializers.ModelSerializer):
+    spa_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = FourthOwner
+        fields = ['id', 'fullname', 'email', 'phone', 'spa_count', 'created_at', 'updated_at']
+    
+    def get_spa_count(self, obj):
+        return obj.spas.count()
+
+
 class SpaListSerializer(serializers.ModelSerializer):
     primary_owner_name = serializers.CharField(source='primary_owner.fullname', read_only=True)
     secondary_owner_name = serializers.CharField(source='secondary_owner.fullname', read_only=True)
+    third_owner_name = serializers.CharField(source='third_owner.fullname', read_only=True)
+    fourth_owner_name = serializers.CharField(source='fourth_owner.fullname', read_only=True)
     state = serializers.CharField(source='area.city.state.name', read_only=True)
     city = serializers.CharField(source='area.city.name', read_only=True)
     area_name = serializers.CharField(source='area.name', read_only=True)
@@ -61,6 +85,8 @@ class SpaListSerializer(serializers.ModelSerializer):
             'id', 'spa_code', 'spa_name', 
             'primary_owner', 'primary_owner_name',
             'secondary_owner', 'secondary_owner_name',
+            'third_owner', 'third_owner_name',
+            'fourth_owner', 'fourth_owner_name',
             'spamanager', 'status', 'agreement_status', 'agreement_status_display',
             'state', 'city', 'area', 'area_name', 'google_map_link', 'created_at'
         ]
@@ -69,6 +95,8 @@ class SpaListSerializer(serializers.ModelSerializer):
 class SpaDetailSerializer(serializers.ModelSerializer):
     primary_owner = PrimaryOwnerSerializer(read_only=True)
     secondary_owner = SecondaryOwnerSerializer(read_only=True)
+    third_owner = ThirdOwnerSerializer(read_only=True)
+    fourth_owner = FourthOwnerSerializer(read_only=True)
     area = AreaSerializer(read_only=True)
     agreement_status_display = serializers.CharField(source='get_agreement_status_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
@@ -77,7 +105,7 @@ class SpaDetailSerializer(serializers.ModelSerializer):
         model = Spa
         fields = [
             'id', 'spa_code', 'spa_name', 
-            'primary_owner', 'secondary_owner', 'spamanager',
+            'primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner', 'spamanager',
             'opening_date', 
             'status', 'status_display',
             'line_track', 'landmark',
@@ -92,7 +120,7 @@ class SpaCreateUpdateSerializer(serializers.ModelSerializer):
         model = Spa
         fields = [
             'spa_code', 'spa_name', 
-            'primary_owner', 'secondary_owner', 'spamanager',
+            'primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner', 'spamanager',
             'opening_date',
             'status', 'line_track', 'landmark', 
             'emails', 'phones', 'address', 'google_map_link',

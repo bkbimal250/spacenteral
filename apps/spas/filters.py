@@ -1,5 +1,5 @@
 import django_filters
-from .models import Spa, PrimaryOwner, SecondaryOwner
+from .models import Spa, PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner
 
 
 class SpaFilter(django_filters.FilterSet):
@@ -17,6 +17,8 @@ class SpaFilter(django_filters.FilterSet):
     # Owner filters
     primary_owner = django_filters.ModelChoiceFilter(queryset=PrimaryOwner.objects.all())
     secondary_owner = django_filters.ModelChoiceFilter(queryset=SecondaryOwner.objects.all())
+    third_owner = django_filters.ModelChoiceFilter(queryset=ThirdOwner.objects.all())
+    fourth_owner = django_filters.ModelChoiceFilter(queryset=FourthOwner.objects.all())
     
     # Location filters
     state = django_filters.NumberFilter(field_name='area__city__state')
@@ -35,7 +37,7 @@ class SpaFilter(django_filters.FilterSet):
         model = Spa
         fields = [
             'spa_name', 'spa_code', 'spamanager', 'status', 'agreement_status',
-            'primary_owner', 'secondary_owner', 'state', 'city', 'area'
+            'primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner', 'state', 'city', 'area'
         ]
 
 
@@ -60,5 +62,29 @@ class SecondaryOwnerFilter(django_filters.FilterSet):
     
     class Meta:
         model = SecondaryOwner
+        fields = ['fullname', 'email', 'phone']
+
+
+class ThirdOwnerFilter(django_filters.FilterSet):
+    """Filters for ThirdOwner model"""
+    
+    fullname = django_filters.CharFilter(lookup_expr='icontains')
+    email = django_filters.CharFilter(lookup_expr='icontains')
+    phone = django_filters.CharFilter(lookup_expr='icontains')
+    
+    class Meta:
+        model = ThirdOwner
+        fields = ['fullname', 'email', 'phone']
+
+
+class FourthOwnerFilter(django_filters.FilterSet):
+    """Filters for FourthOwner model"""
+    
+    fullname = django_filters.CharFilter(lookup_expr='icontains')
+    email = django_filters.CharFilter(lookup_expr='icontains')
+    phone = django_filters.CharFilter(lookup_expr='icontains')
+    
+    class Meta:
+        model = FourthOwner
         fields = ['fullname', 'email', 'phone']
 

@@ -35,6 +35,38 @@ class SecondaryOwner(models.Model):
         return self.fullname
 
 
+class ThirdOwner(models.Model):
+    """Independent Third Owner model"""
+    fullname = models.CharField(max_length=200)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'third_owners'
+        ordering = ['fullname']
+
+    def __str__(self):
+        return self.fullname
+
+
+class FourthOwner(models.Model):
+    """Independent Fourth Owner model"""
+    fullname = models.CharField(max_length=200)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'fourth_owners'
+        ordering = ['fullname']
+
+    def __str__(self):
+        return self.fullname
+
+
 class Spa(models.Model):
     spa_code = models.CharField(max_length=50, unique=True)
     spa_name = models.CharField(max_length=200)
@@ -58,6 +90,26 @@ class Spa(models.Model):
         blank=True,
         related_name='spas',
         help_text="Secondary Owner (optional)"
+    )
+    
+    # One Third Owner can manage multiple spas, but each spa has only ONE third owner (optional)
+    third_owner = models.ForeignKey(
+        'ThirdOwner',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='spas',
+        help_text="Third Owner (optional)"
+    )
+    
+    # One Fourth Owner can manage multiple spas, but each spa has only ONE fourth owner (optional)
+    fourth_owner = models.ForeignKey(
+        'FourthOwner',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='spas',
+        help_text="Fourth Owner (optional)"
     )
     
     spamanager = models.CharField(max_length=200, blank=True, null=True)
