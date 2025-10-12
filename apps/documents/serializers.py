@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import DocumentType, Document
+from .models import DocumentType, Document, OwnerDocument
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -121,6 +121,117 @@ class DocumentCreateUpdateSerializer(serializers.ModelSerializer):
                 'spa': 'Spa is required'
             })
 
+        return data
+    
+    def create(self, validated_data):
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        return super().update(instance, validated_data)
+
+
+# OwnerDocument Serializers
+
+class OwnerDocumentListSerializer(serializers.ModelSerializer):
+    uploaded_by_name = serializers.SerializerMethodField()
+    file_size = serializers.SerializerMethodField()
+    file_extension = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = OwnerDocument
+        fields = [
+            'id', 'title', 'file', 'notes',
+            'primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner',
+            'owner_name', 'owner_type',
+            'uploaded_by', 'uploaded_by_name',
+            'file_size', 'file_extension',
+            'created_at', 'updated_at'
+        ]
+    
+    def get_uploaded_by_name(self, obj):
+        if obj.uploaded_by:
+            return f"{obj.uploaded_by.first_name} {obj.uploaded_by.last_name}".strip() or obj.uploaded_by.email
+        return "System"
+    
+    def get_file_size(self, obj):
+        if obj.file:
+            try:
+                size = obj.file.size
+                if size < 1024:
+                    return f"{size} B"
+                elif size < 1024 * 1024:
+                    return f"{size / 1024:.1f} KB"
+                else:
+                    return f"{size / (1024 * 1024):.1f} MB"
+            except:
+                return "Unknown"
+        return "N/A"
+    
+    def get_file_extension(self, obj):
+        if obj.file:
+            return obj.file.name.split('.')[-1].upper()
+        return "N/A"
+
+
+class OwnerDocumentDetailSerializer(serializers.ModelSerializer):
+    uploaded_by = UserBasicSerializer(read_only=True)
+    file_size = serializers.SerializerMethodField()
+    file_extension = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = OwnerDocument
+        fields = [
+            'id', 'title', 'file', 'notes',
+            'primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner',
+            'owner_name', 'owner_type',
+            'uploaded_by', 'file_size', 'file_extension',
+            'created_at', 'updated_at'
+        ]
+    
+    def get_file_size(self, obj):
+        if obj.file:
+            try:
+                size = obj.file.size
+                if size < 1024:
+                    return f"{size} B"
+                elif size < 1024 * 1024:
+                    return f"{size / 1024:.1f} KB"
+                else:
+                    return f"{size / (1024 * 1024):.1f} MB"
+            except:
+                return "Unknown"
+        return "N/A"
+    
+    def get_file_extension(self, obj):
+        if obj.file:
+            return obj.file.name.split('.')[-1].upper()
+        return "N/A"
+
+
+class OwnerDocumentCreateUpdateSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = OwnerDocument
+        fields = ['title', 'file', 'notes', 'primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner']
+    
+    def validate(self, data):
+        # Validation: Ensure only one owner is set
+        owners_set = sum([
+            bool(data.get('primary_owner')),
+            bool(data.get('secondary_owner')),
+            bool(data.get('third_owner')),
+            bool(data.get('fourth_owner'))
+        ])
+        
+        if owners_set == 0:
+            raise serializers.ValidationError({
+                'owner': 'At least one owner must be specified for the document'
+            })
+        if owners_set > 1:
+            raise serializers.ValidationError({
+                'owner': 'Only one owner can be specified per document'
+            })
+        
         return data
     
     def create(self, validated_data):
