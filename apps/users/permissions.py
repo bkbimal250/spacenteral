@@ -6,35 +6,37 @@ from rest_framework.permissions import BasePermission
 
 class IsAdminUser(BasePermission):
     """
-    Permission class to allow only admin users.
-    Used to protect admin dashboard endpoints.
+    Permission class to allow admin, manager, and spa_manager users.
+    Used to protect dashboard endpoints.
+    Note: spa_manager is also known as area_manager
     """
-    message = "Access denied. Only administrators can access this resource."
+    message = "Access denied. Only administrators, managers, or spa managers can access this resource."
 
     def has_permission(self, request, view):
         # Check if user is authenticated
         if not request.user or not request.user.is_authenticated:
             return False
         
-        # Check if user is admin
-        return request.user.user_type == 'admin'
+        # Allow admin, manager, and spa_manager (area_manager)
+        return request.user.user_type in ['admin', 'manager', 'spa_manager']
 
 
-class IsSpaOwner(BasePermission):
+class IsAdminOnly(BasePermission):
     """
-    Permission class to allow only spa owners.
+    Permission class to allow ONLY admin users (strict).
+    Used for sensitive operations like user management.
     """
-    message = "Access denied. Only spa owners can access this resource."
+    message = "Access denied. Only administrators can access this resource."
 
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
             return False
-        return request.user.user_type == 'spa_owner'
+        return request.user.user_type == 'admin'
 
 
 class IsSpaManager(BasePermission):
     """
-    Permission class to allow only spa managers.
+    Permission class to allow only spa managers (area managers).
     """
     message = "Access denied. Only spa managers can access this resource."
 
@@ -42,6 +44,18 @@ class IsSpaManager(BasePermission):
         if not request.user or not request.user.is_authenticated:
             return False
         return request.user.user_type == 'spa_manager'
+
+
+class IsManager(BasePermission):
+    """
+    Permission class to allow only managers.
+    """
+    message = "Access denied. Only managers can access this resource."
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return request.user.user_type == 'manager'
 
 
 class IsOwnerOrAdmin(BasePermission):
@@ -71,7 +85,7 @@ class IsOwnerOrAdmin(BasePermission):
 
 class IsAdminOrReadOnly(BasePermission):
     """
-    Custom permission to only allow admins to edit.
+    Custom permission to allow admins/managers to edit.
     Other authenticated users have read-only access.
     """
     def has_permission(self, request, view):
@@ -79,6 +93,7 @@ class IsAdminOrReadOnly(BasePermission):
         if request.method in ['GET', 'HEAD', 'OPTIONS']:
             return request.user and request.user.is_authenticated
         
-        # Write permissions only for admin
-        return request.user and request.user.is_authenticated and request.user.user_type == 'admin'
+        # Write permissions for admin, manager, and spa_manager
+        return (request.user and request.user.is_authenticated and 
+                request.user.user_type in ['admin', 'manager', 'spa_manager'])
 
