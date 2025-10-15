@@ -77,7 +77,11 @@ class MachineCreateUpdateSerializer(serializers.ModelSerializer):
         ]
     
     def validate_serial_number(self, value):
-        """Ensure serial number is unique"""
+        """Ensure serial number is unique (only if provided)"""
+        # Allow empty/null serial numbers
+        if not value:
+            return value
+            
         instance_id = self.instance.id if self.instance else None
         if Machine.objects.filter(serial_number=value).exclude(id=instance_id).exists():
             raise serializers.ValidationError("Machine with this serial number already exists.")

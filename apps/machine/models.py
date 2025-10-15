@@ -36,7 +36,7 @@ class Machine(models.Model):
     spa = models.ForeignKey('spas.Spa', on_delete=models.SET_NULL, null=True, blank=True, related_name='machines', help_text="Spa where machine is installed (location inherited from spa)")
 
     # --- Machine Information ---
-    serial_number = models.CharField(max_length=100, blank=True, null=True)
+    serial_number = models.CharField(max_length=100, blank=True, null=True, help_text="Unique serial number (optional)")
     machine_code = models.CharField(max_length=100, blank=True, null=True, help_text="Unique internal code or ID")
     machine_name = models.CharField(max_length=100, blank=True, null=True, help_text="Display name or identifier")
     model_name = models.CharField(max_length=100, blank=True, null=True, help_text="Model/Type of machine")
