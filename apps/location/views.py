@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count
+from apps.users.permissions import IsAdminUser
 from .models import State, City, Area
 from .serializers import StateSerializer, CitySerializer, AreaSerializer
 
@@ -13,6 +14,7 @@ class StateViewSet(viewsets.ModelViewSet):
     """
     queryset = State.objects.all()
     serializer_class = StateSerializer
+    permission_classes = [IsAdminUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name']
     ordering_fields = ['name', 'created_at']
@@ -101,6 +103,7 @@ class CityViewSet(viewsets.ModelViewSet):
     """
     queryset = City.objects.select_related('state').all()
     serializer_class = CitySerializer
+    permission_classes = [IsAdminUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['state']
     search_fields = ['name', 'state__name']
@@ -114,6 +117,7 @@ class AreaViewSet(viewsets.ModelViewSet):
     """
     queryset = Area.objects.select_related('city', 'city__state').all()
     serializer_class = AreaSerializer
+    permission_classes = [IsAdminUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['city', 'city__state']
     search_fields = ['name', 'city__name', 'city__state__name']

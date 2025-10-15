@@ -15,8 +15,10 @@ from .serializers import (
 from .throttles import (
     OTPRequestThrottle, OTPRequestDailyThrottle,
     PasswordResetThrottle, PasswordResetDailyThrottle,
-    OTPVerifyThrottle, BurstRateThrottle
+    OTPVerifyThrottle, BurstRateThrottle,
+    LoginRateThrottle, LoginDailyThrottle
 )
+from .permissions import IsAdminUser
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -24,9 +26,11 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     
     def get_permissions(self):
-        if self.action == 'create':
-            return [AllowAny()]
-        return [IsAuthenticated()]
+        # User creation via API is disabled - only admin can create via Django admin
+        # User registration is handled through separate public endpoints
+        if self.action == 'me':
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -168,8 +172,14 @@ class EmailPasswordLoginView(APIView):
         "email": "user@example.com",
         "password": "yourpassword"
     }
+    
+    Rate Limiting:
+    - 2 requests per minute (burst protection)
+    - 5 requests per hour
+    - 20 requests per day
     """
     permission_classes = [AllowAny]
+    throttle_classes = [BurstRateThrottle, LoginRateThrottle, LoginDailyThrottle]
     
     def post(self, request):
         serializer = EmailPasswordLoginSerializer(data=request.data)

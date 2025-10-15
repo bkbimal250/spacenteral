@@ -2,6 +2,7 @@ from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from apps.users.permissions import IsAdminUser
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count, Q
 from .models import Machine, AccountHolder
@@ -22,7 +23,7 @@ class MachineViewSet(viewsets.ModelViewSet):
     queryset = Machine.objects.select_related(
         'spa', 'spa__area', 'spa__area__city', 'spa__area__city__state', 'created_by', 'acc_holder'
     ).all()
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = MachineFilter
     search_fields = [
@@ -174,7 +175,7 @@ class AccountHolderViewSet(viewsets.ModelViewSet):
     """
     queryset = AccountHolder.objects.all()
     serializer_class = AccountHolderSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminUser]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['full_name', 'designation']
     ordering_fields = ['full_name', 'created_at']

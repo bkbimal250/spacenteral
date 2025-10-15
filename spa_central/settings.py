@@ -169,9 +169,9 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = config('MEDIA_URL', default='/media/')
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# File Upload Settings
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+# File Upload Settings (30MB max for documents and images)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 30 * 1024 * 1024  # 30MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 30 * 1024 * 1024  # 30MB
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -179,11 +179,21 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='https://companydos.api.d0s369.co.in', cast=Csv())
-
+# In production, only allow specific origins
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS', 
+    default='http://localhost:5173,http://127.0.0.1:5173,https://companydos.api.d0s369.co.in', 
+    cast=Csv()
+)
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only for development
+
+# Only allow all origins in DEBUG mode (for development convenience)
+# In production (DEBUG=False), only CORS_ALLOWED_ORIGINS will be used
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
 
 # Channels Configuration
 ASGI_APPLICATION = 'spa_central.asgi.application'
@@ -226,6 +236,8 @@ REST_FRAMEWORK = {
         'otp_verify': '10/hour',            # OTP verification attempts
         'email_sending': '20/hour',         # General email sending
         'burst': '2/min',                   # Burst protection
+        'login': '5/hour',                  # Login attempts per hour
+        'login_daily': '20/day',            # Daily login attempts
     },
 }
 

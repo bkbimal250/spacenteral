@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from .validators import validate_document_file
 
 
 def spa_manager_document_upload_path(instance, filename):
@@ -73,7 +74,7 @@ class Document(models.Model):
     
     doc_type = models.ForeignKey(DocumentType, related_name='documents', on_delete=models.PROTECT)
     title = models.CharField(max_length=200)
-    file = models.FileField(upload_to=document_upload_path)
+    file = models.FileField(upload_to=document_upload_path, validators=[validate_document_file])
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         related_name='documents_uploaded', 
@@ -163,7 +164,7 @@ class OwnerDocument(models.Model):
     
     # Document fields
     title = models.CharField(max_length=200)
-    file = models.FileField(upload_to=owner_document_upload_path)
+    file = models.FileField(upload_to=owner_document_upload_path, validators=[validate_document_file])
     notes = models.TextField(blank=True, null=True)
     
     # Metadata
@@ -256,7 +257,7 @@ class SpaManagerDocument(models.Model):
         help_text="Spa manager this document belongs to"
     )
     title = models.CharField(max_length=200)
-    file = models.FileField(upload_to=spa_manager_document_upload_path)
+    file = models.FileField(upload_to=spa_manager_document_upload_path, validators=[validate_document_file])
     notes = models.TextField(blank=True, null=True)
     
     # Metadata

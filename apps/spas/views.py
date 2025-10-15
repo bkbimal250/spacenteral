@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from apps.users.permissions import IsAdminUser
 from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager
 from .filters import SpaFilter, PrimaryOwnerFilter, SecondaryOwnerFilter, ThirdOwnerFilter, FourthOwnerFilter, SpaManagerFilter
 from .serializers import (
@@ -22,7 +23,7 @@ from .serializers import (
 class PrimaryOwnerViewSet(viewsets.ModelViewSet):
     queryset = PrimaryOwner.objects.prefetch_related('documents').all()
     serializer_class = PrimaryOwnerSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = PrimaryOwnerFilter
     search_fields = ['fullname', 'email', 'phone']
@@ -33,7 +34,7 @@ class PrimaryOwnerViewSet(viewsets.ModelViewSet):
 class SecondaryOwnerViewSet(viewsets.ModelViewSet):
     queryset = SecondaryOwner.objects.prefetch_related('documents').all()
     serializer_class = SecondaryOwnerSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = SecondaryOwnerFilter
     search_fields = ['fullname', 'email', 'phone']
@@ -44,7 +45,7 @@ class SecondaryOwnerViewSet(viewsets.ModelViewSet):
 class ThirdOwnerViewSet(viewsets.ModelViewSet):
     queryset = ThirdOwner.objects.prefetch_related('documents').all()
     serializer_class = ThirdOwnerSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ThirdOwnerFilter
     search_fields = ['fullname', 'email', 'phone']
@@ -55,7 +56,7 @@ class ThirdOwnerViewSet(viewsets.ModelViewSet):
 class FourthOwnerViewSet(viewsets.ModelViewSet):
     queryset = FourthOwner.objects.prefetch_related('documents').all()
     serializer_class = FourthOwnerSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = FourthOwnerFilter
     search_fields = ['fullname', 'email', 'phone']
@@ -67,7 +68,7 @@ class SpaViewSet(viewsets.ModelViewSet):
     queryset = Spa.objects.select_related(
         'primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner', 'area__city__state', 'created_by'
     ).all()
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = SpaFilter
     search_fields = [
@@ -142,7 +143,7 @@ class SpaManagerViewSet(viewsets.ModelViewSet):
     queryset = SpaManager.objects.select_related(
         'spa', 'spa__area', 'spa__area__city', 'spa__area__city__state'
     ).prefetch_related('documents').all()
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = SpaManagerFilter
     search_fields = ['fullname', 'email', 'phone', 'spa__spa_name', 'spa__spa_code']

@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count, Q
 from django.http import FileResponse
+from apps.users.permissions import IsAdminUser
 from .models import DocumentType, Document, OwnerDocument, SpaManagerDocument
 from .serializers import (
     DocumentTypeSerializer, 
@@ -26,7 +27,7 @@ class DocumentTypeViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = DocumentType.objects.filter(is_active=True)  # Only show active types
     serializer_class = DocumentTypeSerializer
-    permission_classes = [permissions.AllowAny]  # Public read access
+    permission_classes = [IsAdminUser]  # Only admin can access
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description']
     ordering = ['name']
@@ -34,8 +35,8 @@ class DocumentTypeViewSet(viewsets.ReadOnlyModelViewSet):
 
 class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.select_related('doc_type', 'uploaded_by', 'spa').all()
-    # Public: anyone can list, upload, and download
-    permission_classes = [permissions.AllowAny]
+    # Only admin can access documents
+    permission_classes = [IsAdminUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = DocumentFilter
     search_fields = ['title', 'notes', 'spa_code', 'spa_name', 'doc_type__name']
@@ -124,7 +125,7 @@ class OwnerDocumentViewSet(viewsets.ModelViewSet):
     queryset = OwnerDocument.objects.select_related(
         'primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner', 'uploaded_by'
     ).all()
-    permission_classes = [permissions.AllowAny]  # Public access
+    permission_classes = [IsAdminUser]  # Only admin can access
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = OwnerDocumentFilter
     search_fields = ['title', 'notes', 'owner_name', 'owner_type']
@@ -246,7 +247,7 @@ class SpaManagerDocumentViewSet(viewsets.ModelViewSet):
     queryset = SpaManagerDocument.objects.select_related(
         'spa_manager', 'spa_manager__spa', 'uploaded_by'
     ).all()
-    permission_classes = [permissions.AllowAny]  # Public access
+    permission_classes = [IsAdminUser]  # Only admin can access
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = SpaManagerDocumentFilter
     search_fields = ['title', 'notes', 'manager_name', 'spa_manager__fullname']

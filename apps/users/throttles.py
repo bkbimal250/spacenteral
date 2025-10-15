@@ -66,3 +66,20 @@ class BurstRateThrottle(AnonRateThrottle):
     scope = 'burst'
     rate = '2/min'
 
+
+class LoginRateThrottle(AnonRateThrottle):
+    """
+    Limit login attempts to prevent brute force
+    - 5 attempts per hour
+    """
+    scope = 'login'
+    rate = '5/hour'
+
+
+class LoginDailyThrottle(AnonRateThrottle):
+    """
+    Daily limit for login attempts
+    - 20 attempts per day
+    """
+    scope = 'login_daily'
+    rate = '20/day'
