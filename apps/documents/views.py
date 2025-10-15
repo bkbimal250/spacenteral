@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count, Q
 from django.http import FileResponse
-from .models import DocumentType, Document, OwnerDocument
+from .models import DocumentType, Document, OwnerDocument, SpaManagerDocument
 from .serializers import (
     DocumentTypeSerializer, 
     DocumentListSerializer,
@@ -12,9 +12,12 @@ from .serializers import (
     DocumentCreateUpdateSerializer,
     OwnerDocumentListSerializer,
     OwnerDocumentDetailSerializer,
-    OwnerDocumentCreateUpdateSerializer
+    OwnerDocumentCreateUpdateSerializer,
+    SpaManagerDocumentListSerializer,
+    SpaManagerDocumentDetailSerializer,
+    SpaManagerDocumentCreateUpdateSerializer
 )
-from .filters import DocumentFilter
+from .filters import DocumentFilter, OwnerDocumentFilter, SpaManagerDocumentFilter
 
 
 class DocumentTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -122,7 +125,8 @@ class OwnerDocumentViewSet(viewsets.ModelViewSet):
         'primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner', 'uploaded_by'
     ).all()
     permission_classes = [permissions.AllowAny]  # Public access
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = OwnerDocumentFilter
     search_fields = ['title', 'notes', 'owner_name', 'owner_type']
     ordering_fields = ['created_at', 'title', 'updated_at']
     ordering = ['-created_at']
@@ -230,6 +234,99 @@ class OwnerDocumentViewSet(viewsets.ModelViewSet):
         return Response({
             'total_documents': total_docs,
             'by_owner_type': by_type,
+            'top_uploaders': list(by_uploader)
+        })
+
+
+class SpaManagerDocumentViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for Spa Manager Documents
+    Allows uploading and managing documents for spa managers
+    """
+    queryset = SpaManagerDocument.objects.select_related(
+        'spa_manager', 'spa_manager__spa', 'uploaded_by'
+    ).all()
+    permission_classes = [permissions.AllowAny]  # Public access
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = SpaManagerDocumentFilter
+    search_fields = ['title', 'notes', 'manager_name', 'spa_manager__fullname']
+    ordering_fields = ['created_at', 'title', 'updated_at']
+    ordering = ['-created_at']
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return SpaManagerDocumentListSerializer
+        elif self.action in ['create', 'update', 'partial_update']:
+            return SpaManagerDocumentCreateUpdateSerializer
+        return SpaManagerDocumentDetailSerializer
+
+    def perform_create(self, serializer):
+        uploader = self.request.user if getattr(self.request, 'user', None) and self.request.user.is_authenticated else None
+        serializer.save(uploaded_by=uploader)
+
+    def get_queryset(self):
+        """
+        Optionally filter documents by spa_manager
+        """
+        queryset = super().get_queryset()
+        
+        # Filter by spa_manager
+        spa_manager_id = self.request.query_params.get('spa_manager_id', None)
+        if spa_manager_id:
+            queryset = queryset.filter(spa_manager_id=spa_manager_id)
+        
+        return queryset
+
+    @action(detail=True, methods=['get'])
+    def download(self, request, pk=None):
+        """Download a spa manager document file"""
+        document = self.get_object()
+        if document.file:
+            return FileResponse(
+                document.file.open('rb'),
+                as_attachment=True,
+                filename=document.file.name.split('/')[-1]
+            )
+        return Response(
+            {'error': 'No file attached'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    @action(detail=False, methods=['get'])
+    def by_manager(self, request):
+        """
+        Get all documents for a specific spa manager
+        Usage: /api/spa-manager-documents/by_manager/?manager_id=123
+        """
+        manager_id = request.query_params.get('manager_id')
+        if not manager_id:
+            return Response(
+                {'error': 'manager_id parameter required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        docs = self.queryset.filter(spa_manager_id=manager_id)
+        serializer = self.get_serializer(docs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """Get spa manager document statistics"""
+        total_docs = self.queryset.count()
+        
+        by_manager = self.queryset.values(
+            'spa_manager__fullname'
+        ).annotate(
+            count=Count('id')
+        ).order_by('-count')[:10]
+        
+        by_uploader = self.queryset.values('uploaded_by__email').annotate(
+            count=Count('id')
+        ).order_by('-count')[:10]
+        
+        return Response({
+            'total_documents': total_docs,
+            'top_managers_by_document_count': list(by_manager),
             'top_uploaders': list(by_uploader)
         })
 

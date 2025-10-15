@@ -26,7 +26,7 @@ urlpatterns = [
     path('', home, name='home'),
     
     # Admin
-    path('admin/', admin.site.urls),
+    path('admin-panel/dishaonlinesolution/', admin.site.urls),
     
     # API Authentication & Users
     path('api/', include('apps.users.urls')),

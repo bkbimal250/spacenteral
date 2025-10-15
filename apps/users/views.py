@@ -12,6 +12,11 @@ from .serializers import (
     VerifyOTPSerializer, OTPSerializer,
     EmailPasswordLoginSerializer, ResetPasswordViaOTPSerializer
 )
+from .throttles import (
+    OTPRequestThrottle, OTPRequestDailyThrottle,
+    PasswordResetThrottle, PasswordResetDailyThrottle,
+    OTPVerifyThrottle, BurstRateThrottle
+)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -94,8 +99,14 @@ class RequestOTPView(APIView):
         "email": "user@example.com",
         "purpose": "login"  // or "registration" or "password_reset"
     }
+    
+    Rate Limiting:
+    - 2 requests per minute (burst protection)
+    - 3 requests per hour
+    - 10 requests per day
     """
     permission_classes = [AllowAny]
+    throttle_classes = [BurstRateThrottle, OTPRequestThrottle, OTPRequestDailyThrottle]
     
     def post(self, request):
         serializer = RequestOTPSerializer(data=request.data)
@@ -118,8 +129,12 @@ class VerifyOTPView(APIView):
         "last_name": "Doe",    // optional, for registration
         "phone": "+1234567890" // optional, for registration
     }
+    
+    Rate Limiting:
+    - 10 attempts per hour (prevent brute force)
     """
     permission_classes = [AllowAny]
+    throttle_classes = [OTPVerifyThrottle]
     
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)
@@ -165,8 +180,16 @@ class EmailPasswordLoginView(APIView):
 
 
 class RequestPasswordResetOTPView(APIView):
-    """Request an OTP for resetting password"""
+    """
+    Request an OTP for resetting password
+    
+    Rate Limiting:
+    - 2 requests per minute (burst protection)
+    - 3 requests per hour
+    - 5 requests per day
+    """
     permission_classes = [AllowAny]
+    throttle_classes = [BurstRateThrottle, PasswordResetThrottle, PasswordResetDailyThrottle]
 
     def post(self, request):
         data = request.data.copy()
@@ -179,8 +202,14 @@ class RequestPasswordResetOTPView(APIView):
 
 
 class ResetPasswordViaOTPView(APIView):
-    """Reset password using email + otp + new password"""
+    """
+    Reset password using email + otp + new password
+    
+    Rate Limiting:
+    - 10 attempts per hour (prevent brute force)
+    """
     permission_classes = [AllowAny]
+    throttle_classes = [OTPVerifyThrottle]
 
     def post(self, request):
         serializer = ResetPasswordViaOTPSerializer(data=request.data)

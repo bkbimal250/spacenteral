@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.location.models import State, City, Area
-from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa
+from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager
 
 
 class StateSerializer(serializers.ModelSerializer):
@@ -27,46 +27,62 @@ class AreaSerializer(serializers.ModelSerializer):
 
 class PrimaryOwnerSerializer(serializers.ModelSerializer):
     spa_count = serializers.SerializerMethodField()
+    document_count = serializers.SerializerMethodField()
     
     class Meta:
         model = PrimaryOwner
-        fields = ['id', 'fullname', 'email', 'phone', 'spa_count', 'created_at', 'updated_at']
+        fields = ['id', 'fullname', 'email', 'phone', 'spa_count', 'document_count', 'created_at', 'updated_at']
     
     def get_spa_count(self, obj):
         return obj.spas.count()
+    
+    def get_document_count(self, obj):
+        return obj.documents.count()
 
 
 class SecondaryOwnerSerializer(serializers.ModelSerializer):
     spa_count = serializers.SerializerMethodField()
+    document_count = serializers.SerializerMethodField()
     
     class Meta:
         model = SecondaryOwner
-        fields = ['id', 'fullname', 'email', 'phone', 'spa_count', 'created_at', 'updated_at']
+        fields = ['id', 'fullname', 'email', 'phone', 'spa_count', 'document_count', 'created_at', 'updated_at']
     
     def get_spa_count(self, obj):
         return obj.spas.count()
+    
+    def get_document_count(self, obj):
+        return obj.documents.count()
 
 
 class ThirdOwnerSerializer(serializers.ModelSerializer):
     spa_count = serializers.SerializerMethodField()
+    document_count = serializers.SerializerMethodField()
     
     class Meta:
         model = ThirdOwner
-        fields = ['id', 'fullname', 'email', 'phone', 'spa_count', 'created_at', 'updated_at']
+        fields = ['id', 'fullname', 'email', 'phone', 'spa_count', 'document_count', 'created_at', 'updated_at']
     
     def get_spa_count(self, obj):
         return obj.spas.count()
+    
+    def get_document_count(self, obj):
+        return obj.documents.count()
 
 
 class FourthOwnerSerializer(serializers.ModelSerializer):
     spa_count = serializers.SerializerMethodField()
+    document_count = serializers.SerializerMethodField()
     
     class Meta:
         model = FourthOwner
-        fields = ['id', 'fullname', 'email', 'phone', 'spa_count', 'created_at', 'updated_at']
+        fields = ['id', 'fullname', 'email', 'phone', 'spa_count', 'document_count', 'created_at', 'updated_at']
     
     def get_spa_count(self, obj):
         return obj.spas.count()
+    
+    def get_document_count(self, obj):
+        return obj.documents.count()
 
 
 class SpaListSerializer(serializers.ModelSerializer):
@@ -133,5 +149,59 @@ class SpaCreateUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'primary_owner': 'Primary owner is required'
             })
+        return data
+
+
+class SpaManagerSerializer(serializers.ModelSerializer):
+    spa_name = serializers.CharField(source='spa.spa_name', read_only=True)
+    spa_code = serializers.CharField(source='spa.spa_code', read_only=True)
+    area_name = serializers.CharField(source='spa.area.name', read_only=True)
+    city_name = serializers.CharField(source='spa.area.city.name', read_only=True)
+    state_name = serializers.CharField(source='spa.area.city.state.name', read_only=True)
+    document_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = SpaManager
+        fields = [
+            'id', 'fullname', 'email', 'phone', 'address',
+            'spa', 'spa_name', 'spa_code',
+            'area_name', 'city_name', 'state_name',
+            'document_count',
+            'created_at', 'updated_at'
+        ]
+    
+    def get_document_count(self, obj):
+        return obj.documents.count()
+
+
+class SpaManagerListSerializer(serializers.ModelSerializer):
+    spa_name = serializers.CharField(source='spa.spa_name', read_only=True)
+    spa_code = serializers.CharField(source='spa.spa_code', read_only=True)
+    area_name = serializers.CharField(source='spa.area.name', read_only=True)
+    city_name = serializers.CharField(source='spa.area.city.name', read_only=True)
+    state_name = serializers.CharField(source='spa.area.city.state.name', read_only=True)
+    document_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = SpaManager
+        fields = [
+            'id', 'fullname', 'email', 'phone', 'address',
+            'spa', 'spa_name', 'spa_code',
+            'area_name', 'city_name', 'state_name',
+            'document_count',
+            'created_at'
+        ]
+    
+    def get_document_count(self, obj):
+        return obj.documents.count()
+
+
+class SpaManagerCreateUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SpaManager
+        fields = ['fullname', 'email', 'phone', 'address', 'spa']
+    
+    def validate(self, data):
+        # Optional: Add any custom validation if needed
         return data
 

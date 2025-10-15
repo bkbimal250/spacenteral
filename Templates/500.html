@@ -1,117 +1,15 @@
+<!-- templates/500.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Error - Spa Central</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #333;
-        }
-        
-        .error-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            padding: 60px 40px;
-            text-align: center;
-            max-width: 500px;
-            width: 90%;
-            margin: 20px;
-        }
-        
-        .error-code {
-            font-size: 120px;
-            font-weight: bold;
-            color: #ff6b6b;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .error-title {
-            font-size: 28px;
-            color: #333;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-        
-        .error-message {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 30px;
-            line-height: 1.6;
-        }
-        
-        .home-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
-        }
-        
-        .home-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
-            text-decoration: none;
-            color: white;
-        }
-        
-        .spa-logo {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-            border-radius: 50%;
-            margin: 0 auto 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-        }
-        
-        @media (max-width: 600px) {
-            .error-container {
-                padding: 40px 20px;
-            }
-            
-            .error-code {
-                font-size: 80px;
-            }
-            
-            .error-title {
-                font-size: 24px;
-            }
-        }
-    </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Server error</title>
+  <style>body{font-family:system-ui;padding:40px;color:#222}</style>
 </head>
 <body>
-    <div class="error-container">
-        <div class="spa-logo">SC</div>
-        <div class="error-code">500</div>
-        <h1 class="error-title">Server Error</h1>
-        <p class="error-message">
-            We're experiencing some technical difficulties. Our team has been notified 
-            and is working to fix the issue. Please try again later.
-        </p>
-        <a href="/" class="home-button">Go to Homepage</a>
-    </div>
+  <h1>500 — Server error</h1>
+  <p>Something went wrong on our side. The team has been notified.</p>
+  <p><a href="/">Return home</a></p>
 </body>
 </html>

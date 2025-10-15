@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import DocumentType, Document, OwnerDocument
+from .models import DocumentType, Document, OwnerDocument, SpaManagerDocument
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -232,6 +232,109 @@ class OwnerDocumentCreateUpdateSerializer(serializers.ModelSerializer):
                 'owner': 'Only one owner can be specified per document'
             })
         
+        return data
+    
+    def create(self, validated_data):
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        return super().update(instance, validated_data)
+
+
+# SpaManagerDocument Serializers
+
+class SpaManagerDocumentListSerializer(serializers.ModelSerializer):
+    uploaded_by_name = serializers.SerializerMethodField()
+    file_size = serializers.SerializerMethodField()
+    file_extension = serializers.SerializerMethodField()
+    spa_name = serializers.CharField(source='spa_manager.spa.spa_name', read_only=True)
+    spa_code = serializers.CharField(source='spa_manager.spa.spa_code', read_only=True)
+    
+    class Meta:
+        model = SpaManagerDocument
+        fields = [
+            'id', 'title', 'file', 'notes',
+            'spa_manager', 'manager_name',
+            'spa_name', 'spa_code',
+            'uploaded_by', 'uploaded_by_name',
+            'file_size', 'file_extension',
+            'created_at', 'updated_at'
+        ]
+    
+    def get_uploaded_by_name(self, obj):
+        if obj.uploaded_by:
+            return f"{obj.uploaded_by.first_name} {obj.uploaded_by.last_name}".strip() or obj.uploaded_by.email
+        return "System"
+    
+    def get_file_size(self, obj):
+        if obj.file:
+            try:
+                size = obj.file.size
+                if size < 1024:
+                    return f"{size} B"
+                elif size < 1024 * 1024:
+                    return f"{size / 1024:.1f} KB"
+                else:
+                    return f"{size / (1024 * 1024):.1f} MB"
+            except:
+                return "Unknown"
+        return "N/A"
+    
+    def get_file_extension(self, obj):
+        if obj.file:
+            return obj.file.name.split('.')[-1].upper()
+        return "N/A"
+
+
+class SpaManagerDocumentDetailSerializer(serializers.ModelSerializer):
+    uploaded_by = UserBasicSerializer(read_only=True)
+    file_size = serializers.SerializerMethodField()
+    file_extension = serializers.SerializerMethodField()
+    spa_name = serializers.CharField(source='spa_manager.spa.spa_name', read_only=True)
+    spa_code = serializers.CharField(source='spa_manager.spa.spa_code', read_only=True)
+    
+    class Meta:
+        model = SpaManagerDocument
+        fields = [
+            'id', 'title', 'file', 'notes',
+            'spa_manager', 'manager_name',
+            'spa_name', 'spa_code',
+            'uploaded_by', 'file_size', 'file_extension',
+            'created_at', 'updated_at'
+        ]
+    
+    def get_file_size(self, obj):
+        if obj.file:
+            try:
+                size = obj.file.size
+                if size < 1024:
+                    return f"{size} B"
+                elif size < 1024 * 1024:
+                    return f"{size / 1024:.1f} KB"
+                else:
+                    return f"{size / (1024 * 1024):.1f} MB"
+            except:
+                return "Unknown"
+        return "N/A"
+    
+    def get_file_extension(self, obj):
+        if obj.file:
+            return obj.file.name.split('.')[-1].upper()
+        return "N/A"
+
+
+class SpaManagerDocumentCreateUpdateSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = SpaManagerDocument
+        fields = ['title', 'file', 'notes', 'spa_manager']
+    
+    def validate(self, data):
+        # Ensure spa_manager is provided
+        if not data.get('spa_manager'):
+            raise serializers.ValidationError({
+                'spa_manager': 'Spa manager is required for the document'
+            })
         return data
     
     def create(self, validated_data):

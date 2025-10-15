@@ -180,6 +180,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='https://companydos.api.d0s369.co.in', cast=Csv())
+
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only for development
 
@@ -189,9 +191,13 @@ ASGI_APPLICATION = 'spa_central.asgi.application'
 # Channel Layers (In-memory for development, Redis for production)
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],
+        },
     },
 }
+
 
 # Django REST Framework
 # Django REST Framework
@@ -210,6 +216,17 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
+    # Rate Limiting / Throttling Configuration
+    'DEFAULT_THROTTLE_CLASSES': [],  # Not applied globally, only to specific views
+    'DEFAULT_THROTTLE_RATES': {
+        'otp_request': '3/hour',           # OTP request limit
+        'otp_request_daily': '10/day',     # Daily OTP limit
+        'password_reset': '3/hour',         # Password reset hourly limit
+        'password_reset_daily': '5/day',    # Password reset daily limit
+        'otp_verify': '10/hour',            # OTP verification attempts
+        'email_sending': '20/hour',         # General email sending
+        'burst': '2/min',                   # Burst protection
+    },
 }
 
 
@@ -229,7 +246,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'info.dishaonlinesoution@gmail.com'
-EMAIL_HOST_PASSWORD = 'ktrc uzzy upkr ftbv'
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = 'Disha Online Solution <info.dishaonlinesoution@gmail.com>'
 SERVER_EMAIL = 'info.dishaonlinesoution@gmail.com'
 
@@ -243,6 +260,14 @@ CORS_ALLOWED_ORIGINS = config(
     default='http://localhost:5173,http://127.0.0.1:5173',
     cast=Csv()
 )
+# CORS_ALLOWED_ORIGINS = [
+#     "https://infodocs.dishaonlinesolution.in",  # React app on Hostinger
+# ]
+# CSRF_TRUSTED_ORIGINS = [
+#     "https://infodocs.dishaonlinesolution.in",
+# ]
+
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     'DELETE',

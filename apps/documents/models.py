@@ -2,6 +2,13 @@ from django.db import models
 from django.conf import settings
 
 
+def spa_manager_document_upload_path(instance, filename):
+    """Store spa manager docs based on spa manager ID."""
+    if instance.spa_manager_id:
+        return f"documents/spa_manager_{instance.spa_manager_id}/{filename}"
+    return f"documents/spa_manager_unassigned/{filename}"
+
+
 class DocumentType(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.CharField(max_length=200, blank=True, null=True)
@@ -237,3 +244,50 @@ class OwnerDocument(models.Model):
             raise ValueError("Only one owner can be specified per document")
         
         super().save(*args, **kwargs)
+
+
+
+class SpaManagerDocument(models.Model):
+    """Documents for Spa Managers"""
+    spa_manager = models.ForeignKey(
+        'spas.SpaManager', 
+        on_delete=models.CASCADE, 
+        related_name='documents',
+        help_text="Spa manager this document belongs to"
+    )
+    title = models.CharField(max_length=200)
+    file = models.FileField(upload_to=spa_manager_document_upload_path)
+    notes = models.TextField(blank=True, null=True)
+    
+    # Metadata
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name='spa_manager_documents_uploaded',
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # Denormalized info for quick access
+    manager_name = models.CharField(max_length=200, blank=True, null=True)
+    
+    class Meta:
+        db_table = 'spa_manager_documents'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['spa_manager'], name='idx_smdoc_spa_manager'),
+            models.Index(fields=['title'], name='idx_smdoc_title'),
+        ]
+
+    def __str__(self):
+        manager_name = self.spa_manager.fullname if self.spa_manager else "Unknown Manager"
+        return f"{self.title} - {manager_name}"
+    
+    def save(self, *args, **kwargs):
+        # Populate denormalized fields
+        if self.spa_manager:
+            self.manager_name = self.spa_manager.fullname
+        super().save(*args, **kwargs)
+
+

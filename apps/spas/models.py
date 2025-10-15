@@ -179,3 +179,27 @@ class Spa(models.Model):
     @property
     def state(self):
         return self.area.city.state if self.area and self.area.city else None
+
+
+
+class SpaManager(models.Model):
+    fullname = models.CharField(max_length=200)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    spa = models.ForeignKey(Spa, on_delete=models.SET_NULL, null=True, related_name='managers')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'spa_managers'
+        ordering = ['fullname']
+
+    def __str__(self):
+        return self.fullname
+    
+    @property
+    def spa_name(self):
+        return self.spa.spa_name if self.spa and self.spa.spa_name else None
+    
+ 
