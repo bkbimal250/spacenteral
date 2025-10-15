@@ -27,19 +27,35 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-qj1c-p**&$smg*@+0ie90
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS', 
+    default='127.0.0.1,localhost,infodocs.dishaonlinesolution.in,machspa.dishaonlinesolution.in', 
+    cast=Csv()
+)
 
-# Production Security Settings
+# ============================================================================
+# PRODUCTION SECURITY SETTINGS
+# ============================================================================
 if not DEBUG:
-    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
-    SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
-    CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
+    # SSL/HTTPS Settings
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+    # Security Headers
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
-    SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)
+    
+    # HSTS (HTTP Strict Transport Security)
+    SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    
+    # Proxy Settings (if behind reverse proxy like nginx/apache)
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
+    USE_X_FORWARDED_PORT = True
 
 
 # Application definition
@@ -162,83 +178,101 @@ STATIC_URL = config('STATIC_URL', default='/static/')
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else []
 
-# WhiteNoise configuration
+# WhiteNoise configuration for serving static files
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files
+# ============================================================================
+# MEDIA FILES CONFIGURATION
+# ============================================================================
 MEDIA_URL = config('MEDIA_URL', default='/media/')
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # File Upload Settings (30MB max for documents and images)
 FILE_UPLOAD_MAX_MEMORY_SIZE = 30 * 1024 * 1024  # 30MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 30 * 1024 * 1024  # 30MB
+FILE_UPLOAD_PERMISSIONS = 0o644
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o755
+
+# Allowed file upload extensions (security)
+ALLOWED_UPLOAD_EXTENSIONS = [
+    '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',  # Documents
+    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg',  # Images
+    '.txt', '.csv',  # Text files
+]
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# CORS Configuration
-# In production, only allow specific origins
-CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS', 
-    default='http://localhost:5173,http://127.0.0.1:5173,https://companydos.api.d0s369.co.in', 
-    cast=Csv()
-)
-
-CORS_ALLOW_CREDENTIALS = True
-
-# Only allow all origins in DEBUG mode (for development convenience)
-# In production (DEBUG=False), only CORS_ALLOWED_ORIGINS will be used
-if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True
-else:
-    CORS_ALLOW_ALL_ORIGINS = False
 
 # Channels Configuration
 ASGI_APPLICATION = 'spa_central.asgi.application'
 
-# Channel Layers (In-memory for development, Redis for production)
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [('127.0.0.1', 6379)],
+# Channel Layers Configuration
+if DEBUG:
+    # Development: In-memory channel layer
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
         },
-    },
-}
+    }
+else:
+    # Production: Redis channel layer
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [(config('REDIS_HOST', default='127.0.0.1'), config('REDIS_PORT', default=6379, cast=int))],
+                'capacity': 1500,
+                'expiry': 10,
+            },
+        },
+    }
 
 
-# Django REST Framework
-# Django REST Framework
+# ============================================================================
+# DJANGO REST FRAMEWORK CONFIGURATION
+# ============================================================================
 REST_FRAMEWORK = {
+    # Authentication
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
+    
+    # Permissions
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
+    
+    # Pagination
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 500,  # Default page size
-    'MAX_PAGE_SIZE': 10000,  # Maximum page size that can be requested via page_size parameter
+    'PAGE_SIZE': 500,      # Default page size
+    'MAX_PAGE_SIZE': 10000,  # Maximum page size that can be requested
+    
+    # Renderers
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
+    
     # Rate Limiting / Throttling Configuration
-    'DEFAULT_THROTTLE_CLASSES': [],  # Not applied globally, only to specific views
+    'DEFAULT_THROTTLE_CLASSES': [],  # Applied per-view, not globally
     'DEFAULT_THROTTLE_RATES': {
         'otp_request': '3/hour',           # OTP request limit
         'otp_request_daily': '10/day',     # Daily OTP limit
-        'password_reset': '3/hour',         # Password reset hourly limit
-        'password_reset_daily': '5/day',    # Password reset daily limit
-        'otp_verify': '10/hour',            # OTP verification attempts
-        'email_sending': '20/hour',         # General email sending
-        'burst': '2/min',                   # Burst protection
-        'login': '5/hour',                  # Login attempts per hour
-        'login_daily': '20/day',            # Daily login attempts
+        'password_reset': '3/hour',        # Password reset hourly limit
+        'password_reset_daily': '5/day',   # Password reset daily limit
+        'otp_verify': '10/hour',           # OTP verification attempts
+        'email_sending': '20/hour',        # General email sending
+        'burst': '2/min',                  # Burst protection (login/auth)
+        'login': '5/hour',                 # Login attempts per hour
+        'login_daily': '20/day',           # Daily login attempts
     },
+    
+    # Exception Handling
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+    
+    # Date/Time Format
+    'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',
 }
 
 
@@ -262,24 +296,34 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = 'Disha Online Solution <info.dishaonlinesoution@gmail.com>'
 SERVER_EMAIL = 'info.dishaonlinesoution@gmail.com'
 
-# Fallback to console backend for testing (comment out above and uncomment below)
+# Fallback to console backend for testing
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# CORS Settings for Production
-CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
-CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:5173,http://127.0.0.1:5173',
-    cast=Csv()
-)
-# CORS_ALLOWED_ORIGINS = [
-#     "https://infodocs.dishaonlinesolution.in",  # React app on Hostinger
-# ]
-# CSRF_TRUSTED_ORIGINS = [
-#     "https://infodocs.dishaonlinesolution.in",
-# ]
 
+# ============================================================================
+# CORS & CSRF CONFIGURATION
+# ============================================================================
 
+# CORS Configuration - Allow specific origins
+if DEBUG:
+    # Development: Allow localhost
+    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOWED_ORIGINS = []
+else:
+    # Production: Only allow specific domains
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [
+        "https://infodocs.dishaonlinesolution.in",   # Admin Dashboard
+        "https://machspa.dishaonlinesolution.in",    # Manager Dashboard
+    ]
+
+# CSRF Trusted Origins (Required for production)
+CSRF_TRUSTED_ORIGINS = [
+    "https://infodocs.dishaonlinesolution.in",
+    "https://machspa.dishaonlinesolution.in",
+]
+
+# CORS Settings
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     'DELETE',
@@ -300,13 +344,6 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
-
-# Static files settings for production
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-] if os.path.exists(os.path.join(BASE_DIR, 'static')) else []
 
 # Logging Configuration for Production
 LOGGING = {
