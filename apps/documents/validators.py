@@ -36,8 +36,8 @@ ALLOWED_MIME_TYPES = [
     'text/csv',
 ]
 
-# Maximum file size: 30MB
-MAX_FILE_SIZE = 30 * 1024 * 1024  # 30MB in bytes
+# Maximum file size: 500MB
+MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB in bytes
 
 
 def validate_file_extension(value):
