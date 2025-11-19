@@ -203,3 +203,16 @@ class SpaManager(models.Model):
         return self.spa.spa_name if self.spa and self.spa.spa_name else None
     
  
+class SocialMediaLink(models.Model):
+    spa = models.ForeignKey(Spa, on_delete=models.CASCADE, related_name='social_media_links')
+    platform = models.CharField(max_length=100,null=True, blank=True)
+    url = models.URLField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'spa_social_media_links'
+        ordering = ['platform']
+
+    def __str__(self):
+        return f"{self.platform} - {self.spa.spa_name}"

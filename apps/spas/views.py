@@ -4,8 +4,16 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from apps.users.permissions import IsAdminUser
-from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager
-from .filters import SpaFilter, PrimaryOwnerFilter, SecondaryOwnerFilter, ThirdOwnerFilter, FourthOwnerFilter, SpaManagerFilter
+from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager, SocialMediaLink
+from .filters import (
+    SpaFilter,
+    PrimaryOwnerFilter,
+    SecondaryOwnerFilter,
+    ThirdOwnerFilter,
+    FourthOwnerFilter,
+    SpaManagerFilter,
+    SocialMediaLinkFilter,
+)
 from .serializers import (
     PrimaryOwnerSerializer,
     SecondaryOwnerSerializer,
@@ -17,6 +25,7 @@ from .serializers import (
     SpaManagerSerializer,
     SpaManagerListSerializer,
     SpaManagerCreateUpdateSerializer,
+    SocialMediaLinkSerializer,
 )
 
 
@@ -190,5 +199,18 @@ class SpaManagerViewSet(viewsets.ModelViewSet):
             'managers_without_spa': managers_without_spa,
             'top_spas_by_manager_count': list(by_spa)
         })
+
+
+class SocialMediaLinkViewSet(viewsets.ModelViewSet):
+    queryset = SocialMediaLink.objects.select_related(
+        'spa', 'spa__area', 'spa__area__city', 'spa__area__city__state'
+    ).all()
+    serializer_class = SocialMediaLinkSerializer
+    permission_classes = [IsAdminUser]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = SocialMediaLinkFilter
+    search_fields = ['platform', 'url', 'spa__spa_name', 'spa__spa_code']
+    ordering_fields = ['platform', 'created_at', 'updated_at']
+    ordering = ['platform']
 
 # Create your views here.

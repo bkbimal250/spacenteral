@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.location.models import State, City, Area
-from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager
+from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager,SocialMediaLink
 
 
 class StateSerializer(serializers.ModelSerializer):
@@ -204,4 +204,13 @@ class SpaManagerCreateUpdateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         # Optional: Add any custom validation if needed
         return data
+
+
+class SocialMediaLinkSerializer(serializers.ModelSerializer):
+    spa_name = serializers.CharField(source='spa.spa_name', read_only=True)
+    spa_code = serializers.CharField(source='spa.spa_code', read_only=True)
+
+    class Meta:
+        model = SocialMediaLink
+        fields = ['id', 'spa', 'spa_name', 'spa_code', 'platform', 'url', 'created_at', 'updated_at']
 
