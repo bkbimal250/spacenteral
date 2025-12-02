@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager
+from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager, SocialMediaLink, SpaWebsite
 
 
 # Import for inline
@@ -180,3 +180,75 @@ class SpaManagerAdmin(admin.ModelAdmin):
         return qs.select_related('spa').prefetch_related('documents')
 
 # Register your models here.
+
+
+@admin.register(SpaWebsite)
+class SpaWebsiteAdmin(admin.ModelAdmin):
+    list_display = ['url', 'category', 'spa_display', 'created_at']
+    search_fields = ['url', 'category', 'spa__spa_name', 'spa__spa_code']
+    list_filter = ['category', 'created_at', 'spa']
+    raw_id_fields = ['spa']
+    ordering = ['-created_at']
+    readonly_fields = ['created_at']
+    
+    fieldsets = (
+        ('Website Information', {
+            'fields': ('url', 'category', 'spa')
+        }),
+        ('Metadata', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def spa_display(self, obj):
+        """Display spa information with link"""
+        if obj.spa:
+            return format_html(
+                '<a href="/admin/spas/spa/{}/change/">{} - {}</a>',
+                obj.spa.id,
+                obj.spa.spa_code,
+                obj.spa.spa_name
+            )
+        return format_html('<span style="color: #999;">Not Assigned</span>')
+    spa_display.short_description = 'Spa'
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('spa')
+    
+
+@admin.register(SocialMediaLink)
+class SocialMediaLinkAdmin(admin.ModelAdmin):
+    list_display = ['platform', 'url', 'spa_display', 'created_at']
+    search_fields = ['platform', 'url', 'spa__spa_name', 'spa__spa_code']
+    list_filter = ['created_at', 'spa']
+    raw_id_fields = ['spa']
+    ordering = ['platform']
+    readonly_fields = ['created_at']
+    
+    fieldsets = (
+        ('Social Media Information', {
+            'fields': ('platform', 'url', 'spa')
+        }),
+        ('Metadata', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def spa_display(self, obj):
+        """Display spa information with link"""
+        if obj.spa:
+            return format_html(
+                '<a href="/admin/spas/spa/{}/change/">{} - {}</a>',
+                obj.spa.id,
+                obj.spa.spa_code,
+                obj.spa.spa_name
+            )
+        return format_html('<span style="color: #999;">Not Assigned</span>')
+    spa_display.short_description = 'Spa'
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('spa')

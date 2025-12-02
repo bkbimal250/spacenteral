@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from apps.users.permissions import IsAdminUser
-from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager, SocialMediaLink
+from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager, SocialMediaLink,SpaWebsite
 from .filters import (
     SpaFilter,
     PrimaryOwnerFilter,
@@ -13,6 +13,7 @@ from .filters import (
     FourthOwnerFilter,
     SpaManagerFilter,
     SocialMediaLinkFilter,
+    SpaWebsiteFilter,
 )
 from .serializers import (
     PrimaryOwnerSerializer,
@@ -26,6 +27,7 @@ from .serializers import (
     SpaManagerListSerializer,
     SpaManagerCreateUpdateSerializer,
     SocialMediaLinkSerializer,
+    SpaWebsiteLinkSerializer,
 )
 
 
@@ -214,3 +216,26 @@ class SocialMediaLinkViewSet(viewsets.ModelViewSet):
     ordering = ['platform']
 
 # Create your views here.
+
+class SpaWebsiteLinkViewset(viewsets.ModelViewSet):
+    queryset = SpaWebsite.objects.select_related(
+        'spa',
+        'spa__area',
+        'spa__area__city',
+        'spa__area__city__state'
+    ).all()
+
+    serializer_class = SpaWebsiteLinkSerializer
+    permission_classes = [IsAdminUser]
+
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = SpaWebsiteFilter
+
+    search_fields = ['url', 'spa__spa_name', 'spa__spa_code']
+    ordering_fields = ['created_at', 'updated_at']
+    ordering = ['created_at']
+
+    def perform_create(self, serializer):
+        """Auto-assign created_by when creating website"""
+        serializer.save(created_by=self.request.user)
+

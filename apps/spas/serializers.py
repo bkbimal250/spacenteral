@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.location.models import State, City, Area
-from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager,SocialMediaLink
+from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager,SocialMediaLink,SpaWebsite
 
 
 class StateSerializer(serializers.ModelSerializer):
@@ -218,3 +218,23 @@ class SocialMediaLinkSerializer(serializers.ModelSerializer):
         model = SocialMediaLink
         fields = ['id', 'spa', 'spa_name', 'spa_code', 'spa_address', 'area_name', 'city_name', 'state_name', 'platform', 'url', 'created_at', 'updated_at']
 
+
+class SpaWebsiteLinkSerializer(serializers.ModelSerializer):
+    spa_name = serializers.CharField(source='spa.spa_name', read_only=True)
+    spa_code = serializers.CharField(source='spa.spa_code', read_only=True)
+    spa_address = serializers.CharField(source='spa.address', read_only=True)
+
+    area_name = serializers.CharField(source='spa.area.name', read_only=True)
+    city_name = serializers.CharField(source='spa.area.city.name', read_only=True)
+    state_name = serializers.CharField(source='spa.area.city.state.name', read_only=True)
+
+    class Meta:
+        model = SpaWebsite      # ✅ FIXED
+        fields = [
+            'id', 
+            'spa', 
+            'spa_name', 'spa_code', 'spa_address',
+            'area_name', 'city_name', 'state_name',
+            'category', 'url',
+            'created_at', 'updated_at'
+        ]

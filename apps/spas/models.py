@@ -216,3 +216,31 @@ class SocialMediaLink(models.Model):
 
     def __str__(self):
         return f"{self.platform} - {self.spa.spa_name}"
+    
+category_choices = [
+    ('Business site', 'business site'),
+    ('Advert site', 'advert site'),
+    ('Booking site', 'booking site'),
+
+]
+
+class SpaWebsite(models.Model):
+    spa = models.ForeignKey(Spa, on_delete=models.CASCADE, related_name='websites')
+    category = models.CharField(max_length=100, choices=category_choices)
+    url = models.URLField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by= models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='spa_websites_created'
+    )
+
+    class Meta:
+        db_table = 'spa_websites'
+        ordering = ['url']
+
+    def __str__(self):
+        return f"Website for {self.spa.spa_name}: {self.url}"

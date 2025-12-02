@@ -1,5 +1,5 @@
 import django_filters
-from .models import Spa, PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, SpaManager, SocialMediaLink
+from .models import Spa, PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, SpaManager, SocialMediaLink,SpaWebsite
 
 
 class SpaFilter(django_filters.FilterSet):
@@ -111,4 +111,16 @@ class SocialMediaLinkFilter(django_filters.FilterSet):
     class Meta:
         model = SocialMediaLink
         fields = ['platform', 'spa']
+
+
+class SpaWebsiteFilter(django_filters.FilterSet):
+    """Filters for SpaWebsite model"""
+
+    url = django_filters.CharFilter(lookup_expr='icontains')
+    category = django_filters.CharFilter(lookup_expr='icontains')
+    spa = django_filters.ModelChoiceFilter(queryset=Spa.objects.all())
+
+    class Meta:
+        model = SpaWebsite
+        fields = ['url', 'spa','category']
 

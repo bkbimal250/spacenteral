@@ -8,6 +8,7 @@ from .views import (
     SpaViewSet,
     SpaManagerViewSet,
     SocialMediaLinkViewSet,
+    SpaWebsiteLinkViewset,
 )
 
 router = DefaultRouter()
@@ -18,6 +19,7 @@ router.register(r'fourth-owners', FourthOwnerViewSet, basename='fourth-owner')
 router.register(r'spas', SpaViewSet, basename='spa')
 router.register(r'spa-managers', SpaManagerViewSet, basename='spa-manager')
 router.register(r'social-media-links', SocialMediaLinkViewSet, basename='social-media-link')
+router.register(r'spa-websites', SpaWebsiteLinkViewset, basename='spa-website')
 
 urlpatterns = [
     path('', include(router.urls)),
