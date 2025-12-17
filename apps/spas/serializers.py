@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.location.models import State, City, Area
-from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager,SocialMediaLink,SpaWebsite
+from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager,SocialMediaLink,SpaWebsite, SpaMedia
 
 
 class StateSerializer(serializers.ModelSerializer):
@@ -104,7 +104,7 @@ class SpaListSerializer(serializers.ModelSerializer):
             'third_owner', 'third_owner_name',
             'fourth_owner', 'fourth_owner_name',
             'spamanager', 'status', 'agreement_status', 'agreement_status_display',
-            'state', 'city', 'area', 'area_name', 'google_map_link', 'created_at'
+            'state', 'city', 'area', 'area_name', 'google_map_link', 'google_drive_link', 'created_at'
         ]
 
 
@@ -125,7 +125,7 @@ class SpaDetailSerializer(serializers.ModelSerializer):
             'opening_date', 
             'status', 'status_display',
             'line_track', 'landmark',
-            'emails', 'phones', 'address', 'google_map_link',
+            'emails', 'phones', 'address', 'google_map_link', 'google_drive_link',
             'agreement_status', 'agreement_status_display', 'remark',
             'area', 'created_at', 'created_by'
         ]
@@ -139,7 +139,7 @@ class SpaCreateUpdateSerializer(serializers.ModelSerializer):
             'primary_owner', 'secondary_owner', 'third_owner', 'fourth_owner', 'spamanager',
             'opening_date',
             'status', 'line_track', 'landmark', 
-            'emails', 'phones', 'address', 'google_map_link',
+            'emails', 'phones', 'address', 'google_map_link', 'google_drive_link',
             'agreement_status', 'remark', 'area'
         ]
     
@@ -238,3 +238,52 @@ class SpaWebsiteLinkSerializer(serializers.ModelSerializer):
             'category', 'url',
             'created_at', 'updated_at'
         ]
+
+
+class SpaMediaSerializer(serializers.ModelSerializer):
+    """Serializer for SpaMedia with spa details"""
+    spa_name = serializers.CharField(source='spa.spa_name', read_only=True)
+    spa_code = serializers.CharField(source='spa.spa_code', read_only=True)
+    spa_address = serializers.CharField(source='spa.address', read_only=True)
+    area_name = serializers.CharField(source='spa.area.name', read_only=True)
+    city_name = serializers.CharField(source='spa.area.city.name', read_only=True)
+    state_name = serializers.CharField(source='spa.area.city.state.name', read_only=True)
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    
+    class Meta:
+        model = SpaMedia
+        fields = [
+            'id',
+            'spa', 'spa_name', 'spa_code', 'spa_address',
+            'area_name', 'city_name', 'state_name',
+            'url',
+            'created_by', 'created_by_username',
+            'created_at', 'updated_at'
+        ]
+
+
+class SpaMediaListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for SpaMedia list view"""
+    spa_name = serializers.CharField(source='spa.spa_name', read_only=True)
+    spa_code = serializers.CharField(source='spa.spa_code', read_only=True)
+    
+    class Meta:
+        model = SpaMedia
+        fields = [
+            'id',
+            'spa', 'spa_name', 'spa_code',
+            'url',
+            'created_at'
+        ]
+
+
+class SpaMediaCreateUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for creating/updating SpaMedia"""
+    
+    class Meta:
+        model = SpaMedia
+        fields = ['spa', 'url']
+    
+    def validate(self, data):
+        # Optional: Add validation if needed
+        return data

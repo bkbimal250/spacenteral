@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager, SocialMediaLink, SpaWebsite
+from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager, SocialMediaLink, SpaWebsite, SpaMedia
 
 
 # Import for inline
@@ -79,7 +79,7 @@ class SpaAdmin(admin.ModelAdmin):
             'description': 'Primary Owner is required. Secondary, Third, and Fourth Owners are optional.'
         }),
         ('Location', {
-            'fields': ('area', 'line_track', 'landmark', 'address', 'google_map_link')
+            'fields': ('area', 'line_track', 'landmark', 'address', 'google_map_link', 'google_drive_link')
         }),
         ('Contact Information', {
             'fields': ('emails', 'phones'),
@@ -252,3 +252,53 @@ class SocialMediaLinkAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related('spa')
+
+
+@admin.register(SpaMedia)
+class SpaMediaAdmin(admin.ModelAdmin):
+    list_display = ['url_display', 'spa_display', 'created_by_display', 'created_at']
+    search_fields = ['url', 'spa__spa_name', 'spa__spa_code']
+    list_filter = ['created_at', 'spa']
+    raw_id_fields = ['spa', 'created_by']
+    ordering = ['-created_at']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Media Information', {
+            'fields': ('spa', 'url')
+        }),
+        ('Metadata', {
+            'fields': ('created_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def url_display(self, obj):
+        """Display URL with clickable link"""
+        if obj.url:
+            return format_html('<a href="{}" target="_blank">{}</a>', obj.url, obj.url[:50] + '...' if len(obj.url) > 50 else obj.url)
+        return '-'
+    url_display.short_description = 'Google Drive Link'
+    
+    def spa_display(self, obj):
+        """Display spa information with link"""
+        if obj.spa:
+            return format_html(
+                '<a href="/admin/spas/spa/{}/change/">{} - {}</a>',
+                obj.spa.id,
+                obj.spa.spa_code,
+                obj.spa.spa_name
+            )
+        return format_html('<span style="color: #999;">Not Assigned</span>')
+    spa_display.short_description = 'Spa'
+    
+    def created_by_display(self, obj):
+        """Display creator username"""
+        if obj.created_by:
+            return obj.created_by.username
+        return '-'
+    created_by_display.short_description = 'Created By'
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('spa', 'created_by')

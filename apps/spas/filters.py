@@ -1,5 +1,5 @@
 import django_filters
-from .models import Spa, PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, SpaManager, SocialMediaLink,SpaWebsite
+from .models import Spa, PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, SpaManager, SocialMediaLink,SpaWebsite, SpaMedia
 
 
 class SpaFilter(django_filters.FilterSet):
@@ -123,4 +123,19 @@ class SpaWebsiteFilter(django_filters.FilterSet):
     class Meta:
         model = SpaWebsite
         fields = ['url', 'spa','category']
+
+
+class SpaMediaFilter(django_filters.FilterSet):
+    """Filters for SpaMedia model"""
+    
+    url = django_filters.CharFilter(lookup_expr='icontains')
+    spa = django_filters.ModelChoiceFilter(queryset=Spa.objects.all())
+    
+    # Date filters
+    created_from = django_filters.DateTimeFilter(field_name='created_at', lookup_expr='gte')
+    created_to = django_filters.DateTimeFilter(field_name='created_at', lookup_expr='lte')
+    
+    class Meta:
+        model = SpaMedia
+        fields = ['url', 'spa']
 

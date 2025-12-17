@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from apps.users.permissions import IsAdminUser
-from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager, SocialMediaLink,SpaWebsite
+from .models import PrimaryOwner, SecondaryOwner, ThirdOwner, FourthOwner, Spa, SpaManager, SocialMediaLink,SpaWebsite, SpaMedia
 from .filters import (
     SpaFilter,
     PrimaryOwnerFilter,
@@ -14,6 +14,7 @@ from .filters import (
     SpaManagerFilter,
     SocialMediaLinkFilter,
     SpaWebsiteFilter,
+    SpaMediaFilter,
 )
 from .serializers import (
     PrimaryOwnerSerializer,
@@ -28,6 +29,9 @@ from .serializers import (
     SpaManagerCreateUpdateSerializer,
     SocialMediaLinkSerializer,
     SpaWebsiteLinkSerializer,
+    SpaMediaSerializer,
+    SpaMediaListSerializer,
+    SpaMediaCreateUpdateSerializer,
 )
 
 
@@ -238,4 +242,43 @@ class SpaWebsiteLinkViewset(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Auto-assign created_by when creating website"""
         serializer.save(created_by=self.request.user)
+
+
+class SpaMediaViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing SpaMedia (Google Drive links for photos/videos)"""
+    queryset = SpaMedia.objects.select_related(
+        'spa',
+        'spa__area',
+        'spa__area__city',
+        'spa__area__city__state',
+        'created_by'
+    ).all()
+    permission_classes = [IsAdminUser]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = SpaMediaFilter
+    search_fields = ['url', 'spa__spa_name', 'spa__spa_code']
+    ordering_fields = ['created_at', 'updated_at', 'url']
+    ordering = ['-created_at']
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return SpaMediaListSerializer
+        if self.action in ['create', 'update', 'partial_update']:
+            return SpaMediaCreateUpdateSerializer
+        return SpaMediaSerializer
+    
+    def perform_create(self, serializer):
+        """Auto-assign created_by when creating media"""
+        serializer.save(created_by=self.request.user)
+    
+    @action(detail=False, methods=['get'])
+    def by_spa(self, request):
+        """Get all media links for a specific spa"""
+        spa_id = request.query_params.get('spa_id')
+        if not spa_id:
+            return Response({'error': 'spa_id parameter required'}, status=400)
+        
+        media = self.queryset.filter(spa_id=spa_id)
+        serializer = self.get_serializer(media, many=True)
+        return Response(serializer.data)
 

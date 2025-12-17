@@ -132,6 +132,7 @@ class Spa(models.Model):
 
     address = models.TextField(blank=True, null=True)
     google_map_link = models.TextField(blank=True, null=True, help_text="Google Maps link for spa location (supports long embed URLs)")
+    google_drive_link = models.URLField(blank=True, null=True, help_text="Google Drive link for spa photos and videos")
 
     AGREEMENT_STATUS_CHOICES = [
         ('done', 'Done'),
@@ -244,3 +245,24 @@ class SpaWebsite(models.Model):
 
     def __str__(self):
         return f"Website for {self.spa.spa_name}: {self.url}"
+
+
+# Media file model using google drive link only(we add google drive link of photo videos)
+class SpaMedia(models.Model):
+    spa = models.ForeignKey(Spa, on_delete=models.CASCADE, related_name='media')
+    url = models.URLField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='spa_media_created'
+    )
+
+    class Meta:
+        db_table = 'spa_media'
+        ordering = ['url']
+
+    def __str__(self):
+        return f"Media for {self.spa.spa_name}: {self.url}"
