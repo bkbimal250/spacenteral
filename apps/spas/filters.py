@@ -124,10 +124,15 @@ class SpaWebsiteFilter(django_filters.FilterSet):
     url = django_filters.CharFilter(lookup_expr='icontains')
     category = django_filters.CharFilter(lookup_expr='icontains')
     spa = django_filters.ModelChoiceFilter(queryset=Spa.objects.all())
+    
+    # Location filters
+    state = django_filters.NumberFilter(field_name='spa__area__city__state')
+    city = django_filters.NumberFilter(field_name='spa__area__city')
+    area = django_filters.NumberFilter(field_name='spa__area')
 
     class Meta:
         model = SpaWebsite
-        fields = ['url', 'spa','category']
+        fields = ['url', 'spa', 'category', 'state', 'city', 'area']
 
 
 class SpaMediaFilter(django_filters.FilterSet):
