@@ -107,10 +107,15 @@ class SocialMediaLinkFilter(django_filters.FilterSet):
 
     platform = django_filters.CharFilter(lookup_expr='icontains')
     spa = django_filters.ModelChoiceFilter(queryset=Spa.objects.all())
+    
+    # Location filters
+    state = django_filters.NumberFilter(field_name='spa__area__city__state')
+    city = django_filters.NumberFilter(field_name='spa__area__city')
+    area = django_filters.NumberFilter(field_name='spa__area')
 
     class Meta:
         model = SocialMediaLink
-        fields = ['platform', 'spa']
+        fields = ['platform', 'spa', 'state', 'city', 'area']
 
 
 class SpaWebsiteFilter(django_filters.FilterSet):
@@ -131,11 +136,16 @@ class SpaMediaFilter(django_filters.FilterSet):
     url = django_filters.CharFilter(lookup_expr='icontains')
     spa = django_filters.ModelChoiceFilter(queryset=Spa.objects.all())
     
+    # Location filters
+    state = django_filters.NumberFilter(field_name='spa__area__city__state')
+    city = django_filters.NumberFilter(field_name='spa__area__city')
+    area = django_filters.NumberFilter(field_name='spa__area')
+    
     # Date filters
     created_from = django_filters.DateTimeFilter(field_name='created_at', lookup_expr='gte')
     created_to = django_filters.DateTimeFilter(field_name='created_at', lookup_expr='lte')
     
     class Meta:
         model = SpaMedia
-        fields = ['url', 'spa']
+        fields = ['url', 'spa', 'state', 'city', 'area']
 
