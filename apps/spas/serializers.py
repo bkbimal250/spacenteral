@@ -266,12 +266,17 @@ class SpaMediaListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for SpaMedia list view"""
     spa_name = serializers.CharField(source='spa.spa_name', read_only=True)
     spa_code = serializers.CharField(source='spa.spa_code', read_only=True)
+    spa_address = serializers.CharField(source='spa.address', read_only=True)
+    area_name = serializers.CharField(source='spa.area.name', read_only=True)
+    city_name = serializers.CharField(source='spa.area.city.name', read_only=True)
+    state_name = serializers.CharField(source='spa.area.city.state.name', read_only=True)
     
     class Meta:
         model = SpaMedia
         fields = [
             'id',
-            'spa', 'spa_name', 'spa_code',
+            'spa', 'spa_name', 'spa_code', 'spa_address',
+            'area_name', 'city_name', 'state_name',
             'url',
             'created_at'
         ]
