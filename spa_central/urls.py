@@ -35,6 +35,7 @@ urlpatterns = [
     path('api/', include('apps.documents.urls')),
     path('api/', include('apps.location.urls')),
     path('api/', include('apps.chat.urls')),
+    path('api/', include('apps.simcard.urls')),
     path('api/auth/token/', obtain_auth_token, name='api_token_auth'),
     path('api/auth/', include('rest_framework.urls')),
     

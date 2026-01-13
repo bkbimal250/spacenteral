@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'apps.machine',
     'apps.documents',
     'apps.chat',
+    'apps.simcard',
 ]
 
 MIDDLEWARE = [
@@ -346,6 +347,7 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # Logging Configuration for Production
+# ============================================================================
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
